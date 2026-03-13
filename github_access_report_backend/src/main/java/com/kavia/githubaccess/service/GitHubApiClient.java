@@ -28,6 +28,8 @@ import java.util.regex.Pattern;
 public class GitHubApiClient {
 
     private static final Logger logger = LoggerFactory.getLogger(GitHubApiClient.class);
+    // Regex to extract the "next" page URL from GitHub's Link header.
+    // Example header: <https://api.github.com/orgs/foo/repos?page=2>; rel="next"
     private static final Pattern NEXT_LINK_PATTERN = Pattern.compile("<([^>]+)>;\\s*rel=\"next\"");
 
     private final WebClient webClient;
@@ -134,9 +136,11 @@ public class GitHubApiClient {
 
     /**
      * Generic paginated fetcher that follows GitHub Link headers.
+     * Each page returns a List<T> (via the typeRef). Pages are emitted
+     * through Flux.generate, then flatMapped to produce a single flattened list.
      *
      * @param initialUri the first page URI
-     * @param typeRef    type reference for deserialization
+     * @param typeRef    type reference for deserialization (already List<T>)
      * @param <T>        element type
      * @return combined list from all pages
      */
@@ -163,7 +167,10 @@ public class GitHubApiClient {
                                                             return Mono.error(new GitHubApiException(msg, code));
                                                         }));
 
-                                var responseMono = responseSpec.toEntityList(typeRef)
+                                // Use toEntity(typeRef) instead of toEntityList(typeRef)
+                                // because typeRef is already ParameterizedTypeReference<List<T>>.
+                                // toEntityList would double-wrap it into List<List<T>>.
+                                var responseMono = responseSpec.toEntity(typeRef)
                                         .timeout(Duration.ofMillis(properties.getApi().getTimeoutMs()));
 
                                 var response = responseMono.block();
