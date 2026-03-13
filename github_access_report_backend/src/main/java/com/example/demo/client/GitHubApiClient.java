@@ -154,9 +154,11 @@ public class GitHubApiClient {
                     "Forbidden: insufficient permissions. Token may lack required scopes (read:org, repo).",
                     statusCode, e);
         } else if (statusCode == 404) {
-            logger.error("Resource not found at URL: {}", url);
+            logger.error("Resource not found at URL: {}. Verify the organization name "
+                    + "(use org name only, not a full URL) and token permissions.", url);
             throw new GitHubApiException(
-                    "Resource not found. Verify the organization name and that the token has access.",
+                    "Resource not found. Verify the organization name (use the org name only, "
+                    + "not a full GitHub URL) and that the token has access.",
                     statusCode, e);
         } else {
             logger.error("GitHub API client error for URL {}: {} - {}",

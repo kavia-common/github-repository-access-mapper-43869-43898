@@ -18,6 +18,51 @@ public class GitHubProperties {
     /** Default GitHub organization name to scan */
     private String org;
 
+    /**
+     * Sanitizes a GitHub organization value that may be a full URL.
+     * <p>
+     * Handles inputs like:
+     * <ul>
+     *   <li>{@code https://github.com/myorg}</li>
+     *   <li>{@code https://github.com/myorg/}</li>
+     *   <li>{@code http://github.com/myorg}</li>
+     *   <li>{@code github.com/myorg}</li>
+     *   <li>{@code myorg} (already clean, returned as-is)</li>
+     * </ul>
+     *
+     * @param value the raw org value (may be a URL or plain name)
+     * @return the extracted organization/user name, or the original value if not a URL
+     */
+    // PUBLIC_INTERFACE
+    /**
+     * Sanitizes a GitHub organization value that may be a full URL.
+     */
+    public static String sanitizeOrgValue(String value) {
+        if (value == null || value.isBlank()) {
+            return value;
+        }
+        String trimmed = value.trim();
+        // Remove trailing slashes
+        while (trimmed.endsWith("/")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        // Check if it looks like a GitHub URL (with or without scheme)
+        // Patterns: https://github.com/org, http://github.com/org, github.com/org
+        if (trimmed.contains("github.com/")) {
+            int idx = trimmed.indexOf("github.com/");
+            String afterGithub = trimmed.substring(idx + "github.com/".length());
+            // Take only the first path segment (the org name)
+            int slashIdx = afterGithub.indexOf('/');
+            if (slashIdx > 0) {
+                afterGithub = afterGithub.substring(0, slashIdx);
+            }
+            if (!afterGithub.isBlank()) {
+                return afterGithub;
+            }
+        }
+        return trimmed;
+    }
+
     /** Base URL for the GitHub REST API */
     private String apiBaseUrl = "https://api.github.com";
 
@@ -38,9 +83,9 @@ public class GitHubProperties {
     }
 
     // PUBLIC_INTERFACE
-    /** Returns the default GitHub organization. */
+    /** Returns the default GitHub organization (sanitized; URL prefixes are stripped). */
     public String getOrg() {
-        return org;
+        return sanitizeOrgValue(org);
     }
 
     public void setOrg(String org) {

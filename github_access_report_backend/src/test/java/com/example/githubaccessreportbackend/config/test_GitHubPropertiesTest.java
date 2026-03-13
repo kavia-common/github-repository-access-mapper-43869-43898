@@ -85,4 +85,68 @@ class test_GitHubPropertiesTest {
         properties.setMaxConcurrency(20);
         assertEquals(20, properties.getMaxConcurrency());
     }
+
+    // --- sanitizeOrgValue tests ---
+
+    @Test
+    @DisplayName("sanitizeOrgValue should return plain org name unchanged")
+    void sanitizeOrgValuePlainName() {
+        assertEquals("myorg", GitHubProperties.sanitizeOrgValue("myorg"));
+    }
+
+    @Test
+    @DisplayName("sanitizeOrgValue should extract org from https://github.com/myorg")
+    void sanitizeOrgValueHttpsUrl() {
+        assertEquals("myorg", GitHubProperties.sanitizeOrgValue("https://github.com/myorg"));
+    }
+
+    @Test
+    @DisplayName("sanitizeOrgValue should extract org from https://github.com/myorg/")
+    void sanitizeOrgValueHttpsUrlTrailingSlash() {
+        assertEquals("myorg", GitHubProperties.sanitizeOrgValue("https://github.com/myorg/"));
+    }
+
+    @Test
+    @DisplayName("sanitizeOrgValue should extract org from http://github.com/myorg")
+    void sanitizeOrgValueHttpUrl() {
+        assertEquals("myorg", GitHubProperties.sanitizeOrgValue("http://github.com/myorg"));
+    }
+
+    @Test
+    @DisplayName("sanitizeOrgValue should extract org from github.com/myorg")
+    void sanitizeOrgValueNoScheme() {
+        assertEquals("myorg", GitHubProperties.sanitizeOrgValue("github.com/myorg"));
+    }
+
+    @Test
+    @DisplayName("sanitizeOrgValue should handle URL with extra path segments")
+    void sanitizeOrgValueExtraPath() {
+        assertEquals("myorg", GitHubProperties.sanitizeOrgValue("https://github.com/myorg/some-repo"));
+    }
+
+    @Test
+    @DisplayName("sanitizeOrgValue should return null for null input")
+    void sanitizeOrgValueNull() {
+        assertNull(GitHubProperties.sanitizeOrgValue(null));
+    }
+
+    @Test
+    @DisplayName("sanitizeOrgValue should return blank for blank input")
+    void sanitizeOrgValueBlank() {
+        assertEquals("", GitHubProperties.sanitizeOrgValue("  "));
+    }
+
+    @Test
+    @DisplayName("getOrg should sanitize URL values automatically")
+    void getOrgShouldSanitize() {
+        properties.setOrg("https://github.com/theakshatmishra");
+        assertEquals("theakshatmishra", properties.getOrg());
+    }
+
+    @Test
+    @DisplayName("getOrg should return plain org name unchanged")
+    void getOrgPlainName() {
+        properties.setOrg("my-organization");
+        assertEquals("my-organization", properties.getOrg());
+    }
 }

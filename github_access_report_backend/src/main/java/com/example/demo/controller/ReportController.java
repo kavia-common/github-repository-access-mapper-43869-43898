@@ -1,6 +1,7 @@
 package com.example.githubaccessreportbackend.controller;
 
 import com.example.githubaccessreportbackend.config.GitHubProperties;
+import static com.example.githubaccessreportbackend.config.GitHubProperties.sanitizeOrgValue;
 import com.example.githubaccessreportbackend.dto.AccessReport;
 import com.example.githubaccessreportbackend.dto.ErrorResponse;
 import com.example.githubaccessreportbackend.service.GitHubAccessReportService;
@@ -97,7 +98,11 @@ public class ReportController {
      */
     private String resolveOrganization(String orgParam) {
         if (orgParam != null && !orgParam.isBlank()) {
-            return orgParam.trim();
+            // Sanitize: if user passes a full GitHub URL, extract just the org name
+            String sanitized = sanitizeOrgValue(orgParam);
+            if (sanitized != null && !sanitized.isBlank()) {
+                return sanitized;
+            }
         }
         String defaultOrg = gitHubProperties.getOrg();
         if (defaultOrg != null && !defaultOrg.isBlank()) {
@@ -105,6 +110,7 @@ public class ReportController {
         }
         throw new IllegalArgumentException(
                 "Organization name is required. Provide it via the 'org' query parameter " +
-                "or set the GITHUB_ORG environment variable.");
+                "or set the GITHUB_ORG environment variable. " +
+                "Use the organization name only (e.g., 'myorg'), not a full URL.");
     }
 }

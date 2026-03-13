@@ -35,6 +35,29 @@ public class HelloController {
         rv.setHttp10Compatible(false);
         return rv;
     }
+
+    // PUBLIC_INTERFACE
+    /**
+     * Redirects /openapi.json to the standard springdoc OpenAPI endpoint (/v3/api-docs).
+     * This provides a convenient alias for tools that expect /openapi.json.
+     *
+     * @param request the incoming HTTP request (used to preserve scheme/host/port via forwarded headers)
+     * @return redirect to /v3/api-docs
+     */
+    @GetMapping("/openapi.json")
+    @Operation(summary = "OpenAPI JSON", description = "Redirects to the OpenAPI v3 JSON specification endpoint")
+    public RedirectView openApiJson(HttpServletRequest request) {
+        String target = UriComponentsBuilder
+                .fromHttpRequest(new ServletServerHttpRequest(request))
+                .replacePath("/v3/api-docs")
+                .replaceQuery(null)
+                .build()
+                .toUriString();
+
+        RedirectView rv = new RedirectView(target);
+        rv.setHttp10Compatible(false);
+        return rv;
+    }
     
     @GetMapping("/health")
     @Operation(summary = "Health check", description = "Returns application health status")
